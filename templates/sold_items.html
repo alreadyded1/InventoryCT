@@ -12,16 +12,28 @@
 
 {% if items %}
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle" id="soldItemsTable">
             <thead class="table-light">
                 <tr>
                     <th style="width: 80px;">Image</th>
-                    <th style="width: 25%;">Name</th>
-                    <th style="width: 20%;">Brand</th>
-                    <th style="width: 90px;">Cost</th>
-                    <th style="width: 100px;">Quantity</th>
-                    <th style="width: 110px;">Listed On</th>
-                    <th style="width: 150px;">Sold Date</th>
+                    <th class="sortable" data-sort="name" style="width: 25%; cursor: pointer;">
+                        Name <i class="bi bi-arrow-down-up"></i>
+                    </th>
+                    <th class="sortable" data-sort="brand" style="width: 20%; cursor: pointer;">
+                        Brand <i class="bi bi-arrow-down-up"></i>
+                    </th>
+                    <th class="sortable" data-sort="cost" style="width: 90px; cursor: pointer;">
+                        Cost <i class="bi bi-arrow-down-up"></i>
+                    </th>
+                    <th class="sortable" data-sort="quantity" style="width: 100px; cursor: pointer;">
+                        Quantity <i class="bi bi-arrow-down-up"></i>
+                    </th>
+                    <th class="sortable" data-sort="listed_on" style="width: 110px; cursor: pointer;">
+                        Listed On <i class="bi bi-arrow-down-up"></i>
+                    </th>
+                    <th class="sortable" data-sort="sold_date" style="width: 150px; cursor: pointer;">
+                        Sold Date <i class="bi bi-arrow-down-up"></i>
+                    </th>
                     <th style="width: 150px;">Actions</th>
                 </tr>
             </thead>
@@ -41,11 +53,11 @@
                         </div>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-value="{{ item.name|lower }}">
                         <strong>{{ item.name }}</strong>
                         <span class="badge bg-success ms-2">SOLD</span>
                     </td>
-                    <td>
+                    <td data-value="{{ item.brand|lower if item.brand else '' }}">
                         {% if item.brand %}
                             <span class="text-muted">
                                 <i class="bi bi-tag"></i> {{ item.brand }}
@@ -54,24 +66,24 @@
                             <span class="text-muted">-</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-value="{{ item.cost if item.cost else 0 }}">
                         {% if item.cost %}
                             <span class="badge bg-success">${{ "%.2f"|format(item.cost) }}</span>
                         {% else %}
                             <span class="text-muted">N/A</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-value="{{ item.quantity or 0 }}">
                         <span class="badge bg-info">{{ item.quantity or 0 }}</span>
                     </td>
-                    <td>
+                    <td data-value="{{ item.listed_on|lower if item.listed_on else '' }}">
                         {% if item.listed_on %}
                             <span class="text-muted">{{ item.listed_on }}</span>
                         {% else %}
                             <span class="text-muted">-</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td data-value="{{ item.sold_date if item.sold_date else '' }}">
                         {% if item.sold_date %}
                             <small class="text-muted">{{ item.sold_date[:10] }}</small>
                         {% else %}
@@ -107,4 +119,67 @@
         </a>
     </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const table = document.getElementById('soldItemsTable');
+    if (!table) return;
+
+    const headers = table.querySelectorAll('th.sortable');
+    let currentSort = { column: null, direction: 'asc' };
+
+    headers.forEach(header => {
+        header.addEventListener('click', function() {
+            const sortType = this.dataset.sort;
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // Determine sort direction
+            if (currentSort.column === sortType) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.direction = 'asc';
+                currentSort.column = sortType;
+            }
+
+            // Get column index for this sort type
+            const columnIndex = Array.from(header.parentElement.children).indexOf(header);
+
+            // Sort rows
+            rows.sort((a, b) => {
+                const aValue = a.children[columnIndex].dataset.value || '';
+                const bValue = b.children[columnIndex].dataset.value || '';
+
+                // Try to parse as numbers for numeric comparison
+                const aNum = parseFloat(aValue);
+                const bNum = parseFloat(bValue);
+
+                let comparison = 0;
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    comparison = aNum - bNum;
+                } else {
+                    comparison = aValue.toString().localeCompare(bValue.toString());
+                }
+
+                return currentSort.direction === 'asc' ? comparison : -comparison;
+            });
+
+            // Update table
+            rows.forEach(row => tbody.appendChild(row));
+
+            // Update header icons
+            headers.forEach(h => {
+                const icon = h.querySelector('i');
+                if (h === header) {
+                    icon.className = currentSort.direction === 'asc' ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
+                } else {
+                    icon.className = 'bi bi-arrow-down-up';
+                }
+            });
+        });
+    });
+});
+</script>
 {% endblock %}
