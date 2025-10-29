@@ -11,59 +11,74 @@
 </div>
 
 {% if items %}
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-        {% for item in items %}
-        <div class="col">
-            <div class="card h-100 shadow-sm">
-                {% if item.primary_image %}
-                <img src="{{ url_for('uploaded_file', filename=item.primary_image) }}"
-                     class="card-img-top"
-                     alt="{{ item.name }}"
-                     style="height: 200px; object-fit: cover;">
-                {% else %}
-                <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center"
-                     style="height: 200px;">
-                    <i class="bi bi-image text-white" style="font-size: 4rem;"></i>
-                </div>
-                {% endif %}
-                <div class="card-body">
-                    <h5 class="card-title">{{ item.name }}</h5>
-                    {% if item.brand %}
-                    <p class="card-text">
-                        <small class="text-muted">
-                            <i class="bi bi-tag"></i> {{ item.brand }}
-                        </small>
-                    </p>
-                    {% endif %}
-                    <div class="row">
-                        <div class="col-6">
-                            <strong>Cost:</strong>
-                            {% if item.cost %}
-                                ${{ "%.2f"|format(item.cost) }}
-                            {% else %}
-                                N/A
-                            {% endif %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 80px;">Image</th>
+                    <th>Name</th>
+                    <th>Brand</th>
+                    <th style="width: 120px;">Cost</th>
+                    <th style="width: 100px;">Quantity</th>
+                    <th style="width: 150px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>
+                        {% if item.primary_image %}
+                        <img src="{{ url_for('uploaded_file', filename=item.primary_image) }}"
+                             alt="{{ item.name }}"
+                             class="rounded"
+                             style="width: 50px; height: 50px; object-fit: cover;">
+                        {% else %}
+                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center"
+                             style="width: 50px; height: 50px;">
+                            <i class="bi bi-image text-white"></i>
                         </div>
-                        <div class="col-6">
-                            <strong>Qty:</strong> {{ item.quantity or 0 }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ item.name }}</strong>
+                    </td>
+                    <td>
+                        {% if item.brand %}
+                            <span class="text-muted">
+                                <i class="bi bi-tag"></i> {{ item.brand }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if item.cost %}
+                            <span class="badge bg-success">${{ "%.2f"|format(item.cost) }}</span>
+                        {% else %}
+                            <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-info">{{ item.quantity or 0 }}</span>
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="{{ url_for('view_item', item_id=item.id) }}"
+                               class="btn btn-sm btn-outline-primary"
+                               title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{{ url_for('edit_item', item_id=item.id) }}"
+                               class="btn btn-sm btn-outline-secondary"
+                               title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
                         </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-transparent">
-                    <div class="btn-group w-100" role="group">
-                        <a href="{{ url_for('view_item', item_id=item.id) }}"
-                           class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-eye"></i> View
-                        </a>
-                        <a href="{{ url_for('edit_item', item_id=item.id) }}"
-                           class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-pencil"></i> Edit
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 {% else %}
     <div class="text-center py-5">
