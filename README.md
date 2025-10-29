@@ -127,6 +127,87 @@ A lightweight, web-based inventory management system with a clean front-end inte
    sudo systemctl start inventory-manager
    ```
 
+## Updating
+
+### Updating Docker Installation
+
+To update a Docker-based installation:
+
+```bash
+cd InventoryCT
+git pull origin main
+docker-compose down
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+### Updating Direct Python Installation
+
+To update a direct Python installation:
+
+1. **Stop the application** (if running as a service)
+   ```bash
+   sudo systemctl stop inventory-manager
+   ```
+
+   Or if running manually, press `Ctrl+C` in the terminal.
+
+2. **Backup your data** (recommended before updating)
+   ```bash
+   cp inventory.db inventory.db.backup
+   cp -r uploads/ uploads.backup/
+   ```
+
+3. **Pull the latest changes**
+   ```bash
+   cd InventoryCT
+   git pull origin main
+   ```
+
+4. **Update Python dependencies**
+   ```bash
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install --upgrade -r requirements.txt
+   ```
+
+5. **Restart the application**
+
+   If using systemd service:
+   ```bash
+   sudo systemctl start inventory-manager
+   sudo systemctl status inventory-manager
+   ```
+
+   If running manually:
+   ```bash
+   python app.py
+   ```
+
+### Checking Current Version
+
+```bash
+cd InventoryCT
+git log -1 --oneline  # Show latest commit
+git status           # Check for uncommitted changes
+```
+
+### Rollback (if needed)
+
+If an update causes issues:
+
+```bash
+# Restore database backup
+cp inventory.db.backup inventory.db
+cp -r uploads.backup/ uploads/
+
+# Revert to previous version
+git log --oneline    # Find the commit hash you want to revert to
+git checkout <commit-hash>
+
+# Restart the application
+sudo systemctl restart inventory-manager
+```
+
 ## Configuration
 
 ### Environment Variables
