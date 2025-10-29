@@ -44,6 +44,8 @@ def init_db():
             quantity INTEGER,
             description TEXT,
             listed_on TEXT,
+            sold BOOLEAN DEFAULT 0,
+            sold_date TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -60,11 +62,15 @@ def init_db():
         )
     ''')
 
-    # Migration: Add listed_on column if it doesn't exist
+    # Migrations: Add columns if they don't exist
     cursor.execute("PRAGMA table_info(items)")
     columns = [column[1] for column in cursor.fetchall()]
     if 'listed_on' not in columns:
         cursor.execute('ALTER TABLE items ADD COLUMN listed_on TEXT')
+    if 'sold' not in columns:
+        cursor.execute('ALTER TABLE items ADD COLUMN sold BOOLEAN DEFAULT 0')
+    if 'sold_date' not in columns:
+        cursor.execute('ALTER TABLE items ADD COLUMN sold_date TIMESTAMP')
 
     conn.commit()
     conn.close()
@@ -78,15 +84,16 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    """Display all inventory items"""
+    """Display all inventory items (excluding sold items)"""
     conn = get_db()
     cursor = conn.cursor()
 
-    # Get all items with their primary image
+    # Get all items with their primary image (excluding sold items)
     cursor.execute('''
         SELECT i.*, img.filename as primary_image
         FROM items i
         LEFT JOIN images img ON i.id = img.item_id AND img.is_primary = 1
+        WHERE i.sold = 0 OR i.sold IS NULL
         ORDER BY i.updated_at DESC
     ''')
 
@@ -94,6 +101,27 @@ def index():
     conn.close()
 
     return render_template('index.html', items=items)
+
+
+@app.route('/sold')
+def sold_items():
+    """Display all sold items"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Get all sold items with their primary image
+    cursor.execute('''
+        SELECT i.*, img.filename as primary_image
+        FROM items i
+        LEFT JOIN images img ON i.id = img.item_id AND img.is_primary = 1
+        WHERE i.sold = 1
+        ORDER BY i.sold_date DESC
+    ''')
+
+    items = cursor.fetchall()
+    conn.close()
+
+    return render_template('sold_items.html', items=items)
 
 
 @app.route('/item/<int:item_id>')
@@ -288,6 +316,62 @@ def delete_item(item_id):
 
     flash('Item deleted successfully!', 'success')
     return redirect(url_for('index'))
+
+
+@app.route('/mark-sold/<int:item_id>', methods=['POST'])
+def mark_as_sold(item_id):
+    """Mark an item as sold"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Check if item exists
+    cursor.execute('SELECT name FROM items WHERE id = ?', (item_id,))
+    item = cursor.fetchone()
+
+    if not item:
+        flash('Item not found', 'error')
+        return redirect(url_for('index'))
+
+    # Mark as sold with current timestamp
+    cursor.execute('''
+        UPDATE items
+        SET sold = 1, sold_date = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    ''', (item_id,))
+
+    conn.commit()
+    conn.close()
+
+    flash(f'{item["name"]} marked as sold!', 'success')
+    return redirect(url_for('index'))
+
+
+@app.route('/unmark-sold/<int:item_id>', methods=['POST'])
+def unmark_sold(item_id):
+    """Unmark an item as sold (return to inventory)"""
+    conn = get_db()
+    cursor = conn.cursor()
+
+    # Check if item exists
+    cursor.execute('SELECT name FROM items WHERE id = ?', (item_id,))
+    item = cursor.fetchone()
+
+    if not item:
+        flash('Item not found', 'error')
+        return redirect(url_for('sold_items'))
+
+    # Unmark as sold
+    cursor.execute('''
+        UPDATE items
+        SET sold = 0, sold_date = NULL, updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+    ''', (item_id,))
+
+    conn.commit()
+    conn.close()
+
+    flash(f'{item["name"]} returned to inventory!', 'success')
+    return redirect(url_for('sold_items'))
 
 
 @app.route('/uploads/<filename>')
