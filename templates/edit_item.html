@@ -35,6 +35,15 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="listed_on" class="form-label">Listed On</label>
+                        <input type="text" class="form-control" id="listed_on" name="listed_on"
+                               value="{{ item.listed_on or '' }}" placeholder="e.g., eBay, Facebook Marketplace, Craigslist">
+                        <small class="form-text text-muted">
+                            Where this item is listed for sale (optional)
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
                         <textarea class="form-control" id="description" name="description" rows="3">{{ item.description or '' }}</textarea>
                     </div>

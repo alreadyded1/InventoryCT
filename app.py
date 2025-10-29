@@ -43,6 +43,7 @@ def init_db():
             cost REAL,
             quantity INTEGER,
             description TEXT,
+            listed_on TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -58,6 +59,12 @@ def init_db():
             FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
         )
     ''')
+
+    # Migration: Add listed_on column if it doesn't exist
+    cursor.execute("PRAGMA table_info(items)")
+    columns = [column[1] for column in cursor.fetchall()]
+    if 'listed_on' not in columns:
+        cursor.execute('ALTER TABLE items ADD COLUMN listed_on TEXT')
 
     conn.commit()
     conn.close()
@@ -121,6 +128,7 @@ def add_item():
         cost = request.form.get('cost')
         quantity = request.form.get('quantity')
         description = request.form.get('description')
+        listed_on = request.form.get('listed_on')
 
         if not name:
             flash('Item name is required', 'error')
@@ -131,10 +139,10 @@ def add_item():
 
         # Insert item
         cursor.execute('''
-            INSERT INTO items (name, brand, cost, quantity, description)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO items (name, brand, cost, quantity, description, listed_on)
+            VALUES (?, ?, ?, ?, ?, ?)
         ''', (name, brand, float(cost) if cost else None,
-              int(quantity) if quantity else 0, description))
+              int(quantity) if quantity else 0, description, listed_on))
 
         item_id = cursor.lastrowid
 
@@ -176,6 +184,7 @@ def edit_item(item_id):
         cost = request.form.get('cost')
         quantity = request.form.get('quantity')
         description = request.form.get('description')
+        listed_on = request.form.get('listed_on')
 
         if not name:
             flash('Item name is required', 'error')
@@ -184,11 +193,11 @@ def edit_item(item_id):
         # Update item
         cursor.execute('''
             UPDATE items
-            SET name = ?, brand = ?, cost = ?, quantity = ?, description = ?,
+            SET name = ?, brand = ?, cost = ?, quantity = ?, description = ?, listed_on = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         ''', (name, brand, float(cost) if cost else None,
-              int(quantity) if quantity else 0, description, item_id))
+              int(quantity) if quantity else 0, description, listed_on, item_id))
 
         # Handle new image uploads
         files = request.files.getlist('images')

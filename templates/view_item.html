@@ -70,6 +70,12 @@
                             <th>Quantity</th>
                             <td>{{ item.quantity or 0 }}</td>
                         </tr>
+                        {% if item.listed_on %}
+                        <tr>
+                            <th>Listed On</th>
+                            <td>{{ item.listed_on }}</td>
+                        </tr>
+                        {% endif %}
                         {% if item.description %}
                         <tr>
                             <th>Description</th>

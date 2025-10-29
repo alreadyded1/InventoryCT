@@ -20,6 +20,7 @@
                     <th>Brand</th>
                     <th style="width: 120px;">Cost</th>
                     <th style="width: 100px;">Quantity</th>
+                    <th style="width: 180px;">Listed On</th>
                     <th style="width: 150px;">Actions</th>
                 </tr>
             </thead>
@@ -60,6 +61,13 @@
                     </td>
                     <td>
                         <span class="badge bg-info">{{ item.quantity or 0 }}</span>
+                    </td>
+                    <td>
+                        {% if item.listed_on %}
+                            <span class="text-muted">{{ item.listed_on }}</span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
                     </td>
                     <td>
                         <div class="btn-group" role="group">
