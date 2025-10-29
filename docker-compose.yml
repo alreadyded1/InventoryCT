@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  inventory-manager:
+    build: .
+    container_name: inventory-manager
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist database and uploads
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+    environment:
+      - SECRET_KEY=change-this-to-a-random-secret-key
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/', timeout=2)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
