@@ -15,7 +15,6 @@
         <table class="table table-hover align-middle" id="soldItemsTable">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 80px;">Image</th>
                     <th class="sortable" data-sort="name" style="width: 20%; cursor: pointer;">
                         Name <i class="bi bi-arrow-down-up"></i>
                     </th>
@@ -43,19 +42,6 @@
             <tbody>
                 {% for item in items %}
                 <tr>
-                    <td>
-                        {% if item.primary_image %}
-                        <img src="{{ url_for('uploaded_file', filename=item.primary_image) }}"
-                             alt="{{ item.name }}"
-                             class="rounded"
-                             style="width: 50px; height: 50px; object-fit: cover;">
-                        {% else %}
-                        <div class="bg-secondary rounded d-flex align-items-center justify-content-center"
-                             style="width: 50px; height: 50px;">
-                            <i class="bi bi-image text-white"></i>
-                        </div>
-                        {% endif %}
-                    </td>
                     <td data-value="{{ item.name|lower }}">
                         <strong>{{ item.name }}</strong>
                         <span class="badge bg-success ms-2">SOLD</span>
