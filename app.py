@@ -503,6 +503,12 @@ def register():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         email = request.form.get('email')
+        registration_code = request.form.get('registration_code')
+
+        # Check registration code
+        if registration_code != 'SIGNMEUPDAN25':
+            flash('Invalid registration code', 'error')
+            return redirect(url_for('register'))
 
         if not username or not password:
             flash('Username and password are required', 'error')
