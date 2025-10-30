@@ -52,11 +52,12 @@
                         </div>
                         <div class="carousel-inner">
                             {% for image in images %}
-                            <div class="carousel-item {% if loop.first %}active{% endif %}">
+                            <div class="carousel-item {% if loop.first %}active{% endif %}" id="carousel-item-{{ loop.index0 }}">
                                 <img src="{{ url_for('uploaded_file', filename=image.filename) }}"
                                      class="d-block w-100"
                                      alt="{{ item.name }}"
-                                     style="max-height: 400px; object-fit: contain; background-color: #f8f9fa;">
+                                     style="max-height: 400px; object-fit: contain; background-color: #f8f9fa;"
+                                     onerror="this.style.display='none'; document.getElementById('carousel-item-{{ loop.index0 }}').innerHTML='<div class=\'bg-light rounded d-flex align-items-center justify-content-center\' style=\'height: 400px;\'><div class=\'text-center text-muted\'><i class=\'bi bi-exclamation-triangle\' style=\'font-size: 3rem;\'></i><p class=\'mt-2\'>Image file not found</p><small>{{ image.filename }}</small></div></div>';">
                             </div>
                             {% endfor %}
                         </div>
@@ -68,6 +69,15 @@
                             <span class="carousel-control-next-icon"></span>
                         </button>
                         {% endif %}
+                    </div>
+                </div>
+                {% else %}
+                <div class="mb-4">
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 300px;">
+                        <div class="text-center text-muted">
+                            <i class="bi bi-image" style="font-size: 4rem;"></i>
+                            <p class="mt-2">No images available</p>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
