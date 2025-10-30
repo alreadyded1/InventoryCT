@@ -92,6 +92,12 @@
                             <th>Quantity</th>
                             <td>{{ item.quantity or 0 }}</td>
                         </tr>
+                        {% if item.category_name %}
+                        <tr>
+                            <th>Category</th>
+                            <td><i class="bi bi-folder"></i> {{ item.category_name }}</td>
+                        </tr>
+                        {% endif %}
                         {% if item.listed_on %}
                         <tr>
                             <th>Listed On</th>

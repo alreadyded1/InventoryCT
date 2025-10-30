@@ -35,6 +35,21 @@
                     </div>
 
                     <div class="mb-3">
+                        <label for="category_id" class="form-label">Category</label>
+                        <select class="form-select" id="category_id" name="category_id">
+                            <option value="">-- Select Category --</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if item.category_id == category.id %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">
+                            <a href="{{ url_for('manage_categories') }}" target="_blank">Manage categories</a>
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
                         <label for="listed_on" class="form-label">Listed On</label>
                         <input type="text" class="form-control" id="listed_on" name="listed_on"
                                value="{{ item.listed_on or '' }}" placeholder="e.g., eBay, Facebook Marketplace, Craigslist">

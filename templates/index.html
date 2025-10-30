@@ -22,16 +22,19 @@
                     <th class="sortable" data-sort="brand" style="cursor: pointer;">
                         Brand <i class="bi bi-arrow-down-up"></i>
                     </th>
-                    <th class="sortable" data-sort="cost" style="width: 120px; cursor: pointer;">
+                    <th class="sortable" data-sort="category" style="width: 140px; cursor: pointer;">
+                        Category <i class="bi bi-arrow-down-up"></i>
+                    </th>
+                    <th class="sortable" data-sort="cost" style="width: 100px; cursor: pointer;">
                         Cost <i class="bi bi-arrow-down-up"></i>
                     </th>
-                    <th class="sortable" data-sort="quantity" style="width: 100px; cursor: pointer;">
+                    <th class="sortable" data-sort="quantity" style="width: 90px; cursor: pointer;">
                         Quantity <i class="bi bi-arrow-down-up"></i>
                     </th>
-                    <th class="sortable" data-sort="listed_on" style="width: 180px; cursor: pointer;">
+                    <th class="sortable" data-sort="listed_on" style="width: 140px; cursor: pointer;">
                         Listed On <i class="bi bi-arrow-down-up"></i>
                     </th>
-                    <th style="width: 150px;">Actions</th>
+                    <th style="width: 130px;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -62,15 +65,24 @@
                             <span class="text-muted">-</span>
                         {% endif %}
                     </td>
+                    <td data-value="{{ item.category_name|lower if item.category_name else '' }}">
+                        {% if item.category_name %}
+                            <span class="text-muted">
+                                <i class="bi bi-folder"></i> {{ item.category_name }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
                     <td data-value="{{ item.cost if item.cost else 0 }}">
                         {% if item.cost %}
-                            <span class="badge bg-success">${{ "%.2f"|format(item.cost) }}</span>
+                            ${{ "%.2f"|format(item.cost) }}
                         {% else %}
-                            <span class="text-muted">N/A</span>
+                            N/A
                         {% endif %}
                     </td>
                     <td data-value="{{ item.quantity or 0 }}">
-                        <span class="badge bg-info">{{ item.quantity or 0 }}</span>
+                        {{ item.quantity or 0 }}
                     </td>
                     <td data-value="{{ item.listed_on|lower if item.listed_on else '' }}">
                         {% if item.listed_on %}
