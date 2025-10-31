@@ -3,15 +3,26 @@
 {% block title %}Sold Items - Inventory Manager{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h1><i class="bi bi-check-circle"></i> Sold Items</h1>
-    <a href="{{ url_for('index') }}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Back to Inventory
-    </a>
+    <div class="d-flex gap-2">
+        <div class="btn-group" role="group" id="viewToggle">
+            <button type="button" class="btn btn-outline-secondary" data-view="table">
+                <i class="bi bi-table"></i> Table
+            </button>
+            <button type="button" class="btn btn-outline-secondary" data-view="card">
+                <i class="bi bi-grid-3x2"></i> Cards
+            </button>
+        </div>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Inventory
+        </a>
+    </div>
 </div>
 
 {% if items %}
-    <div class="table-responsive">
+    <!-- Table View -->
+    <div id="tableView" class="table-responsive">
         <table class="table table-hover align-middle" id="soldItemsTable">
             <thead class="table-light">
                 <tr>
@@ -107,6 +118,66 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Card View (Mobile-Friendly) -->
+    <div id="cardView" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3" style="display: none;">
+        {% for item in items %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        {{ item.name }}
+                        <span class="badge bg-success ms-2">SOLD</span>
+                    </h5>
+                    <div class="mb-2">
+                        {% if item.brand %}
+                        <small class="text-muted"><i class="bi bi-tag"></i> {{ item.brand }}</small>
+                        {% endif %}
+                        {% if item.category_name %}
+                        <small class="text-muted ms-2"><i class="bi bi-folder"></i> {{ item.category_name }}</small>
+                        {% endif %}
+                    </div>
+                    <hr>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted">Cost:</small><br>
+                            <strong>{% if item.cost %}${{ "%.2f"|format(item.cost) }}{% else %}N/A{% endif %}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Quantity:</small><br>
+                            <strong>{{ item.quantity or 0 }}</strong>
+                        </div>
+                        {% if item.listed_on %}
+                        <div class="col-12">
+                            <small class="text-muted">Listed On:</small><br>
+                            <span>{{ item.listed_on }}</span>
+                        </div>
+                        {% endif %}
+                        {% if item.sold_date %}
+                        <div class="col-12">
+                            <small class="text-muted">Sold Date:</small><br>
+                            <span>{{ item.sold_date[:10] }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('view_item', item_id=item.id) }}"
+                           class="btn btn-sm btn-outline-primary flex-grow-1">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                        <form method="POST" action="{{ url_for('unmark_sold', item_id=item.id) }}" class="flex-grow-1">
+                            <button type="submit" class="btn btn-sm btn-outline-warning w-100">
+                                <i class="bi bi-arrow-counterclockwise"></i> Return
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 {% else %}
     <div class="text-center py-5">
         <i class="bi bi-check-circle text-muted" style="font-size: 5rem;"></i>
@@ -122,6 +193,49 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // View toggle functionality
+    const tableView = document.getElementById('tableView');
+    const cardView = document.getElementById('cardView');
+    const toggleButtons = document.querySelectorAll('#viewToggle button');
+
+    // Load saved preference or default to table
+    const savedView = localStorage.getItem('soldItemsView') || 'table';
+
+    function switchView(viewType) {
+        if (viewType === 'table') {
+            tableView.style.display = 'block';
+            cardView.style.display = 'none';
+        } else {
+            tableView.style.display = 'none';
+            cardView.style.display = 'flex';
+        }
+
+        // Update button states
+        toggleButtons.forEach(btn => {
+            if (btn.dataset.view === viewType) {
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-secondary');
+            } else {
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-outline-secondary');
+            }
+        });
+
+        // Save preference
+        localStorage.setItem('soldItemsView', viewType);
+    }
+
+    // Set initial view
+    switchView(savedView);
+
+    // Add click handlers
+    toggleButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            switchView(this.dataset.view);
+        });
+    });
+
+    // Table sorting functionality
     const table = document.getElementById('soldItemsTable');
     if (!table) return;
 
