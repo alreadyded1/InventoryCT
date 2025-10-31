@@ -86,6 +86,15 @@ def init_db():
         )
     ''')
 
+    # Create settings table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     # Migrations: Add columns if they don't exist
     cursor.execute("PRAGMA table_info(items)")
     columns = [column[1] for column in cursor.fetchall()]
@@ -97,6 +106,21 @@ def init_db():
         cursor.execute('ALTER TABLE items ADD COLUMN sold_date TIMESTAMP')
     if 'category_id' not in columns:
         cursor.execute('ALTER TABLE items ADD COLUMN category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL')
+
+    # Auto-create admin user if no users exist
+    cursor.execute('SELECT COUNT(*) as count FROM users')
+    user_count = cursor.fetchone()['count']
+    if user_count == 0:
+        admin_password_hash = generate_password_hash('admin')
+        cursor.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
+                      ('admin', admin_password_hash))
+        print("Created default admin user (username: admin, password: admin)")
+
+    # Set default registration code if not exists
+    cursor.execute('SELECT value FROM settings WHERE key = ?', ('registration_code',))
+    if not cursor.fetchone():
+        cursor.execute('INSERT INTO settings (key, value) VALUES (?, ?)',
+                      ('registration_code', 'SIGNMEUPDAN25'))
 
     conn.commit()
     conn.close()
@@ -505,21 +529,28 @@ def register():
         email = request.form.get('email')
         registration_code = request.form.get('registration_code')
 
-        # Check registration code
-        if registration_code != 'SIGNMEUPDAN25':
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Check registration code from database
+        cursor.execute('SELECT value FROM settings WHERE key = ?', ('registration_code',))
+        result = cursor.fetchone()
+        valid_code = result['value'] if result else 'SIGNMEUPDAN25'
+
+        if registration_code != valid_code:
+            conn.close()
             flash('Invalid registration code', 'error')
             return redirect(url_for('register'))
 
         if not username or not password:
+            conn.close()
             flash('Username and password are required', 'error')
             return redirect(url_for('register'))
 
         if password != confirm_password:
+            conn.close()
             flash('Passwords do not match', 'error')
             return redirect(url_for('register'))
-
-        conn = get_db()
-        cursor = conn.cursor()
 
         try:
             password_hash = generate_password_hash(password)
@@ -572,6 +603,77 @@ def logout():
     session.clear()
     flash(f'Goodbye, {username}!', 'success')
     return redirect(url_for('login'))
+
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    """Change user password"""
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        if not current_password or not new_password:
+            flash('All fields are required', 'error')
+            return redirect(url_for('change_password'))
+
+        if new_password != confirm_password:
+            flash('New passwords do not match', 'error')
+            return redirect(url_for('change_password'))
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],))
+        user = cursor.fetchone()
+
+        if user and check_password_hash(user['password_hash'], current_password):
+            new_password_hash = generate_password_hash(new_password)
+            cursor.execute('UPDATE users SET password_hash = ? WHERE id = ?',
+                         (new_password_hash, session['user_id']))
+            conn.commit()
+            conn.close()
+            flash('Password changed successfully!', 'success')
+            return redirect(url_for('index'))
+        else:
+            conn.close()
+            flash('Current password is incorrect', 'error')
+            return redirect(url_for('change_password'))
+
+    return render_template('change_password.html')
+
+
+@app.route('/admin/settings', methods=['GET', 'POST'])
+@login_required
+def admin_settings():
+    """Admin settings page"""
+    # Check if user is admin
+    if session.get('username') != 'admin':
+        flash('Access denied. Admin only.', 'error')
+        return redirect(url_for('index'))
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if request.method == 'POST':
+        new_code = request.form.get('registration_code')
+        if new_code:
+            cursor.execute('''
+                INSERT OR REPLACE INTO settings (key, value, updated_at)
+                VALUES (?, ?, CURRENT_TIMESTAMP)
+            ''', ('registration_code', new_code))
+            conn.commit()
+            flash(f'Registration code updated to: {new_code}', 'success')
+        else:
+            flash('Registration code cannot be empty', 'error')
+
+    # Get current registration code
+    cursor.execute('SELECT value FROM settings WHERE key = ?', ('registration_code',))
+    result = cursor.fetchone()
+    current_code = result['value'] if result else 'SIGNMEUPDAN25'
+
+    conn.close()
+    return render_template('admin_settings.html', current_code=current_code)
 
 
 @app.route('/uploads/<filename>')
