@@ -90,7 +90,7 @@ A lightweight, web-based inventory management system with a clean front-end inte
 
 3. **Deploy the application**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/alreadyded1/InventoryCT.git
    cd InventoryCT
    python3 -m venv venv
    source venv/bin/activate
